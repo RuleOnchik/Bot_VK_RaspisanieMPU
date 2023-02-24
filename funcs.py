@@ -118,10 +118,10 @@ def rasp(id, day):
             try:
                 i = str(i)
                 if r["les_" + i] != None:
-                    tim = r["tim_" + i]
-                    les = r["les_" + i]
+                    tim = "⏰" + r["tim_" + i]
+                    les = "✏️" + r["les_" + i]
                     les_sm = r["les_sm_" + i]
-                    les_date = r["date_" + i]
+                    les_date = "📅" + r["date_" + i]
                     try:
                         aud = r["aud_" + i]
                     except:
@@ -130,7 +130,7 @@ def rasp(id, day):
                         lin = r["lin_" + i]
                     except:
                         pass
-                    prep = r["prep_" + i]
+                    prep = "👨‍🏫" + r["prep_" + i]
                     otvet = otvet + f'\n\n{tim}'
                     otvet = otvet + f'\n{les}'
                     otvet = otvet + f'\n{prep}'
@@ -174,8 +174,8 @@ def get_now_rasp(id):
                         time_now = datetime.today().time()
                         #time_now = time(12,21)
                         if time_now >= min_time and time_now <= max_time:
-                            otvet += "Сейчас идет: " + data[d]["les_" + i] + f"\n"
-                            otvet += "Преподаватель: " + data[d]["prep_" + i] + f"\n"
+                            otvet += "✏️ Сейчас идет: " + data[d]["les_" + i] + f"\n"
+                            otvet += "👨‍🏫 Преподаватель: " + data[d]["prep_" + i] + f"\n"
                             try:
                                 otvet += "Проходит в: " + data[d]["aud_" + i] + f"\n"
                             except:
@@ -191,7 +191,7 @@ def get_now_rasp(id):
                     except Exception as ex:
                         raise Exception(ex)
 
-    otvet = "Сегодня нет пар"
+    otvet = "Сейчас нет пар"
     return [otvet, link]
     
 def update(id):

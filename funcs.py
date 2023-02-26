@@ -2,75 +2,56 @@ from raspisanie import get_all_rasp, update_rasp
 import json
 from datetime import datetime, date, time, timedelta
 
-def make_log(mes, id):
-    #id_u = 223
-    id_u = id
-    #text = mes
-    text = mes
-    print(text)
+def make_log(text, id):
+    print('make_log:',text)
     group = ""
     rass = ""
 
     try:
-        with open(f"./log_user/log_{id_u}.txt", "r", encoding="utf8") as file:
+        with open(f"./log_user/log_{id}.txt", "r", encoding="utf8") as file:
             dd = file.read()
-            file.close()
         print(dd)
         dd = dd.split(" ")
-        if "Группа:" in dd or "группа:" in dd:
+        if "Группа:" in dd:
             group = dd[dd.index("Группа:")+1]
-        if "Авторассылка:" in dd or "авторассылка:" in dd:
+        if "Авторассылка:" in dd:
             rass = dd[dd.index("Авторассылка:")+1]
     except:
         pass
         
     if rass == "":
         rass = "нет"
+    if group == "":
+        group = "нет"
         
     try:
-        text = text.split(" ")
+        text = text.lower().split(" ")
         print(text)
-        if "Группа:" in text:
-            group = text[text.index("Группа:")+1]
-            print(group)
-        print("Group")
         if "группа:" in text:
             group = text[text.index("группа:")+1]
-            print(group)
-        print("group")
-        if "Авторассылка:" in text:
-            rass = text[text.index("Авторассылка:")+1]
-            print("1")
-        print("Aut")
         if "авторассылка:" in text:
             rass = text[text.index("авторассылка:")+1]
-            print("2")
-        print("aut")
-        with open(f"./log_user/log_{id_u}.txt", "w", encoding="utf8") as file:
-            file.write(f"Группа: {group} Авторассылка: {rass}")
-            file.close()
-            print("3")
+        with open(f"./log_user/log_{id}.txt", "w", encoding="utf8") as file:
+            write_text = f"Группа: {group} Авторассылка: {rass}"
+            print("Новая запись:", write_text)
+            file.write(write_text)
         return "Данные успешно обновлены"
-    except:
-        return "Возникла непредвиденная ошибка"
+    except Except as ex:
+        return f"Возникла ошибка: {ex}"
 
 def get_json_d(group):
     try:
         with open(f'./rasp_json/rasp_for_{group}.json', 'r', encoding='utf-8') as file:
             data = json.load(file)
-            file.close()
         return data
     except:
         get_all_rasp(group)
         return get_json_d(group)
 
 def get_log(id):
-    #id_u = 223
-    id_u = id
     try:
-        with open(f"./log_user/log_{id_u}.txt", "r", encoding="utf8") as file:
+        with open(f"./log_user/log_{id}.txt", "r", encoding="utf8") as file:
             dd = file.read()
-            file.close()
         dd = dd.split(" ")
         group = ""
         rass = ""
@@ -90,12 +71,7 @@ def get_log(id):
         raise Exception("Вы не задали логи")
 
 def rasp(id, day):
-    #id_u = 222
-    #id_u = mes.chat.id
-    #text = mes.text
-    # print(id)
     group, rass = get_log(id)
-
 
     data = get_json_d(group)
     now = datetime.now()
@@ -147,12 +123,10 @@ def rasp(id, day):
     otvet = otvet + f'\n{now.strftime("%A, %d. %B %Y %I:%M%p")}'
     return [otvet, keyboard]
 
-
 def get_now_rasp(id):
     group, rass = get_log(id)
     data = get_json_d(group)
     wek = datetime.today().weekday()
-    #wek = 2
     i = [1, 2, 3, 4, 5, 6, 7]
     otvet = ""
     link = ""
@@ -172,7 +146,6 @@ def get_now_rasp(id):
                             tim = tim[:tim.find("-")] + "0" + tim[tim.find("-")+1:]
                         max_time = time.fromisoformat(tim[tim.find("-")+1:])
                         time_now = datetime.today().time()
-                        #time_now = time(12,21)
                         if time_now >= min_time and time_now <= max_time:
                             otvet += "✏️ Сейчас идет: " + data[d]["les_" + i] + f"\n"
                             otvet += "👨‍🏫 Преподаватель: " + data[d]["prep_" + i] + f"\n"
@@ -195,7 +168,6 @@ def get_now_rasp(id):
     return [otvet, link]
     
 def update(id):
-    # print("id:",id)
     group, rass = get_log(id)
     update_rasp(group)
 
@@ -204,7 +176,6 @@ def test(id):
         print("1")
         with open(f"./log_user/log_{id}.txt", "r", encoding="utf8") as file:
             dd = file.read()
-            file.close()
         print(dd)
         dd = dd.split(" ")
         if "Группа:" in dd:
@@ -212,10 +183,4 @@ def test(id):
     except:
         with open(f"./log_user/log_{id}.txt", "w", encoding="utf8") as file:
             file.write("Группа: 201-341")
-            file.close()
         test(id)
-#test(222)
-#make_log("Группа: 201-251")
-#print(rasp("mes", "Понедельник")[1])
-
-

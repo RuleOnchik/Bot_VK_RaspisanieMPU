@@ -8,20 +8,16 @@ import json
 import os.path
 import os
 
-options = webdriver.ChromeOptions()
-options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36")
-options.headless = True
-driver = webdriver.Chrome(service=Service("./cromedriver/chromedriver.exe"), options=options)
-
 months ={"Янв": 1, "Фев": 2, "Мар": 3, "Апр": 4, "Май": 5, "Июн": 6, "Июл": 7, "Авг": 8, "Сен": 9, "Окт": 10, "Ноя": 11, "Дек": 12}
 
-url = "https://rasp.dmami.ru/"
-#groop = "201-341"
-
-
 def find_groop(gr):
+    url = "https://rasp.dmami.ru/"
     file_name = f"./rasp_html/rasp_for_{gr}.txt"
     try:
+        options = webdriver.ChromeOptions()
+        options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36")
+        options.headless = True
+        driver = webdriver.Chrome(service=Service("./cromedriver/chromedriver.exe"), options=options)
         driver.get(url=url)
         time.sleep(2)
         groops = driver.find_element(by=By.CLASS_NAME, value="groups")
@@ -69,7 +65,6 @@ def get_all_rasp(groop):
                 lessons = pai.find("div", class_="lessons")
                 lesson = lessons.find_all("div", class_="schedule-lesson")
                 tim = pai.find("div", class_="time").text.strip()
-                #print(tim)
 
                 for lesso in lesson:
                     lesson_cl = lesso.get_attribute_list("class")
@@ -114,11 +109,8 @@ def get_all_rasp(groop):
                             less_all[day_title].update({f"date_{k}":date})
                         
             less_all[day_title].update({"les_have":k})
-            
-
 
         data = json.dumps(less_all, indent=2, ensure_ascii=False)
-        #print(data)
 
         with open(fn_json, "w", encoding="utf8") as file:
             file.write(data)

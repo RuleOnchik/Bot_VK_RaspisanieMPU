@@ -37,7 +37,7 @@ def make_log(text, id):
             file.write(write_text)
         return "Данные успешно обновлены"
     except Except as ex:
-        return f"Возникла ошибка: {ex}"
+        return f"Возникла ошибка: {str(ex)}"
 
 def get_json_d(group):
     try:

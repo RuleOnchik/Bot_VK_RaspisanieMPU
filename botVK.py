@@ -6,29 +6,25 @@ import time
 import subprocess
 import datetime
 import funcs
+from variables import token, id_name, weekdays
 import random
-
-tok = '53a987c023bf8f643b9504614a8241fc1269160637a7e1e836a544483383344de8f9390e66982d77b8bde'
-
-bot = vk_api.VkApi(token = tok)
-longpoll = VkLongPoll(bot)
-id_name = 'chat_id'
-
-weekdays = ['/понедельник', '/вторник', '/среда', '/четверг', '/пятница', '/суббота']
 
 def main():
     print('Star main')
     
-    start_bot()
+    bot = vk_api.VkApi(token = token)
+    longpoll = VkLongPoll(bot)
+    
+    start_bot(bot)
 
-def sender(id, text, keyboard=None):
+def sender(bot, id, text, keyboard=None):
     # nonlocal bot, id_name
     post = {id_name : id, 'message' : text, 'random_id' : 0}
     if keyboard!=None:
         post['keyboard']=keyboard.get_keyboard()
     bot.method('messages.send', post)
 
-def start_bot():
+def start_bot(bot):
     # nonlocal bot, longpoll, weekdays
     for event in longpoll.listen():
         if event.type == VkEventType.MESSAGE_NEW:
@@ -40,6 +36,7 @@ def start_bot():
                     keyboard = None
                     otvet = ""
                     keyb_e = False
+                    ########################################
                     if text == "начать" or text == "привет":
                         keyb_e = True
                         keyboard = VkKeyboard()
@@ -76,14 +73,14 @@ def start_bot():
                             except Exception as ex:
                                 otvet = f"Возникла ошибка: "+str(ex)
                                 break
-                    ############################
+                    ###########################
                     if "/цитата_волка" in text:
                         with open('Citati.txt', 'r', encoding='utf-8') as f:
                             citati = f.read().split(f"\n")
                             f.close()
                         r = random.randint(0, len(citati)-1)
                         otvet = f"Цитата №{r+1}\n"+citati[r]
-                    ######################
+                    #####################
                     if "/сейчас" in text:
                         try:
                             otvet, keyb = funcs.get_now_rasp(id)
@@ -98,27 +95,27 @@ def start_bot():
                                     print(sn)
                         except Exception as ex:
                             otvet = f"Возникла ошибка: " + str(ex)
-                    ##################################################
+                    ################################################
                     if "группа:" in text or "авторассылка:" in text:
                         try:
                             otvet = funcs.make_log(text, id)
                         except Exception as ex:
                             otvet = f"Возникла ошибка: " + str(ex)
-                    ###################################
+                    ##################################
                     if "/обновить_расписание" in text:
                         try:
-                            sender(id, "Подождите пожалуйста.")
+                            sender(bot, id, "Подождите пожалуйста.")
                             funcs.update(id)
                             otvet = "Расписание обновлено!"
                         except Exception as ex:
                             otvet = f"Возникла ошибка: " + str(ex)
-                    ####################
+                    ###################
                     if "/stop" in text:
-                        sender(id, "Goodbye!")
+                        sender(bot, id, "Goodbye!")
                         break
                     #########
                     if otvet:
-                        sender(id, otvet, keyboard)
+                        sender(bot, id, otvet, keyboard)
                             
 if __name__ == "__main__":
     main()

@@ -2,13 +2,12 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup as bs
+from variables import months
 import time
 import datetime
 import json
 import os.path
 import os
-
-months ={"Янв": 1, "Фев": 2, "Мар": 3, "Апр": 4, "Май": 5, "Июн": 6, "Июл": 7, "Авг": 8, "Сен": 9, "Окт": 10, "Ноя": 11, "Дек": 12}
 
 def find_groop(gr):
     url = "https://rasp.dmami.ru/"
@@ -33,7 +32,7 @@ def find_groop(gr):
             file.write(week.get_attribute("innerHTML"))
             file.close()
     except Exception as ex:
-        print(ex)
+        print(str(ex))
         pass
     finally:
         driver.close()

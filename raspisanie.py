@@ -119,7 +119,8 @@ def get_all_rasp(group):
         find_group(group)
         get_all_rasp(group)
 
-def add_special(group)
+def add_special(group):
+    pass
 
 def update_rasp(group):
     fn_html = f"./rasp_html/rasp_for_{group}.txt"

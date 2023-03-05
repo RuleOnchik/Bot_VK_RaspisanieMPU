@@ -9,22 +9,17 @@ import funcs
 from variables import token, id_name, weekdays
 import random
 
-def main():
-    print('Star main')
-    
-    bot = vk_api.VkApi(token = token)
-    longpoll = VkLongPoll(bot)
-    
-    start_bot(bot)
+bot = vk_api.VkApi(token = token)
+longpoll = VkLongPoll(bot)
 
-def sender(bot, id, text, keyboard=None):
+def sender(id, text, bot = bot, keyboard=None):
     # nonlocal bot, id_name
     post = {id_name : id, 'message' : text, 'random_id' : 0}
     if keyboard!=None:
         post['keyboard']=keyboard.get_keyboard()
     bot.method('messages.send', post)
 
-def start_bot(bot):
+def start_bot(bot = bot):
     # nonlocal bot, longpoll, weekdays
     for event in longpoll.listen():
         if event.type == VkEventType.MESSAGE_NEW:
@@ -32,7 +27,7 @@ def start_bot(bot):
                 if event.from_chat:
                     text = event.text.lower()
                     id = event.chat_id
-                    print('chat text: ' + text + f' id: {id}')
+                    print(f'chat <{id}> text: ' + text)
                     keyboard = None
                     otvet = ""
                     keyb_e = False
@@ -104,18 +99,23 @@ def start_bot(bot):
                     ##################################
                     if "/обновить_расписание" in text:
                         try:
-                            sender(bot, id, "Подождите пожалуйста.")
+                            sender(id, "Подождите пожалуйста.")
                             funcs.update(id)
                             otvet = "Расписание обновлено!"
                         except Exception as ex:
                             otvet = f"Возникла ошибка: " + str(ex)
                     ###################
                     if "/stop" in text:
-                        sender(bot, id, "Goodbye!")
+                        sender(id, "Goodbye!", bot)
                         break
                     #########
                     if otvet:
-                        sender(bot, id, otvet, keyboard)
-                            
+                        sender(id, otvet, bot, keyboard)
+
+def main():
+    print('Star main')
+    
+    start_bot()
+
 if __name__ == "__main__":
     main()

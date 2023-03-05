@@ -9,7 +9,7 @@ import json
 import os.path
 import os
 
-def find_groop(gr):
+def find_group(gr):
     url = "https://rasp.dmami.ru/"
     file_name = f"./rasp_html/rasp_for_{gr}.txt"
     try:
@@ -19,9 +19,9 @@ def find_groop(gr):
         driver = webdriver.Chrome(service=Service("./cromedriver/chromedriver.exe"), options=options)
         driver.get(url=url)
         time.sleep(2)
-        groops = driver.find_element(by=By.CLASS_NAME, value="groups")
-        groops.clear()
-        groops.send_keys(gr)
+        groups = driver.find_element(by=By.CLASS_NAME, value="groups")
+        groups.clear()
+        groups.send_keys(gr)
         time.sleep(2)
         gr_button = driver.find_element(by=By.ID, value=gr)
         gr_button.click()
@@ -40,14 +40,13 @@ def find_groop(gr):
     print(f"Create {file_name}")
     return file_name
 
-def get_all_rasp(groop):
-    fn_html = f"./rasp_html/rasp_for_{groop}.txt"
-    fn_json = f"./rasp_json/rasp_for_{groop}.json"
+def get_all_rasp(group):
+    fn_html = f"./rasp_html/rasp_for_{group}.txt"
+    fn_json = f"./rasp_json/rasp_for_{group}.json"
     if os.path.exists(fn_html):
         with open(fn_html, "r", encoding="utf8") as fp:
             src = fp.read()
             soup = bs(src, "lxml")
-            fp.close()
 
         days = soup.find_all("div", class_="schedule-day")
         less_all = {}
@@ -117,12 +116,14 @@ def get_all_rasp(groop):
         print(f"Create {fn_json}")
         return fn_json
     else:
-        find_groop(groop)
-        get_all_rasp(groop)
+        find_group(group)
+        get_all_rasp(group)
 
-def update_rasp(groop):
-    fn_html = f"./rasp_html/rasp_for_{groop}.txt"
-    fn_json = f"./rasp_json/rasp_for_{groop}.json"
+def add_special(group)
+
+def update_rasp(group):
+    fn_html = f"./rasp_html/rasp_for_{group}.txt"
+    fn_json = f"./rasp_json/rasp_for_{group}.json"
     if os.path.isfile(fn_html): 
         os.remove(fn_html) 
         print("html removed") 
@@ -135,5 +136,4 @@ def update_rasp(groop):
     else: 
         print("Json file doesn't exists!")
     
-    find_groop(groop)
-    get_all_rasp(groop)
+    get_all_rasp(group)

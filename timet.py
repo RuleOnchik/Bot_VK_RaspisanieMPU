@@ -24,3 +24,8 @@ if j_time < time_now:
     print(j_time)
 else:
     print(time_now)
+    
+# if 5<6<3:
+    # print("qwerty")
+# else:
+    # print("poiuygtfbn")

@@ -1,6 +1,8 @@
-from raspisanie import get_all_rasp, update_rasp
+from raspisanie import get_all_rasp
 import json
 from datetime import datetime, date, time, timedelta
+from variables import weekdays, weekday_d
+import os
 
 def make_log(text, id):
     print('make_log:',text)
@@ -119,57 +121,138 @@ def rasp(id, day):
                 pass
     elif r["les_have"] == 0:
         otvet = otvet + f'\n\nВ этот день пар нет\n'
+    if "special" in r:
+        otvet = otvet + f'\n\nДополнение: {r["special"]}\n'
     keyboard = links
     otvet = otvet + f'\n{now.strftime("%A, %d. %B %Y %I:%M%p")}'
     return [otvet, keyboard]
 
-def get_now_rasp(id):
+def get_now_rasp(id, mode="now", time_mode=None):
     group, rass = get_log(id)
     data = get_json_d(group)
     wek = datetime.today().weekday()
-    i = [1, 2, 3, 4, 5, 6, 7]
-    otvet = ""
+    time_n = datetime.today()
+    time_now = datetime.fromisoformat("1991-01-01T"+f"{time_n.hour if len(str(time_n.hour))==2 else '0'+str(time_n.hour)}")
+    if mode == "now":
+        otvet = f"Сейчас идет:\n"
+    elif mode == "soon":
+        otvet = f"Скоро начнется:\n"
+    elif mode == "next":
+        otvet = f"Следущий занятие:\n"
+    time_delta = timedelta(minutes=5)
+    
+    # wek = 1
+    # time_n = "12:18"
+    # time_now = datetime.fromisoformat("1991-01-01T"+time_n)
+    
     link = ""
     links = []
-    for d in data:
-        if data[d]["id"] == wek:
-            if data[d]["les_have"]:
-                for i in range(data[d]["les_have"]):
-                    try:
-                        i = str(i+1)
+    d = weekday_d[wek]
+    print(d)
+    if wek == 6:
+        otvet = "Сегодня нет пар!"
+        return [otvet, link]
+    if data[d]["les_have"]:
+        for i in range(data[d]["les_have"]):
+            i = str(i+1)
+            tim = data[d]["tim_" + i]
+            print("Время: ",tim)
+            min_time = datetime.fromisoformat("1991-01-01T"+tim[:tim.find("-")])
+            max_time = datetime.fromisoformat("1991-01-01T"+tim[tim.find("-")+1:])
+            if min_time-time_delta <= time_now <= max_time:
+                if (int(i)+1 != data[d]["les_have"]):
+                    if mode == "next":
+                        i = str(int(i)+1)
                         tim = data[d]["tim_" + i]
-                        print(tim)
-                        if len(tim[:tim.find("-")])<5:
-                            tim = "0" + tim
-                        min_time = time.fromisoformat(tim[:tim.find("-")])
-                        if len(tim[tim.find("-")+1:])<5:
-                            tim = tim[:tim.find("-")] + "0" + tim[tim.find("-")+1:]
-                        max_time = time.fromisoformat(tim[tim.find("-")+1:])
-                        time_now = datetime.today().time()
-                        if time_now >= min_time and time_now <= max_time:
-                            otvet += "✏️ Сейчас идет: " + data[d]["les_" + i] + f"\n"
-                            otvet += "👨‍🏫 Преподаватель: " + data[d]["prep_" + i] + f"\n"
-                            try:
-                                otvet += "Проходит в: " + data[d]["aud_" + i] + f"\n"
-                            except:
-                                pass
-                            try:
-                                link = data[d]["lin_" + i]
-                                sn = data[d]["les_sm_" + i]
-                                links = [[sn, link]]
-                            except:
-                                pass
-                            return [otvet, links]
-                    
-                    except Exception as ex:
-                        raise Exception(ex)
+                elif min_time-time_delta >= time_now:
+                    otvet = ""
+                    return [otvet, links]
+                elif time_now >= max_time:
+                    otvet = "На сегодня пары закончились"
+                    return [otvet, links]
+                if mode == "soon" or mode == "next":
+                    otvet += "⏰ Начало в " + tim + f"\n" 
+                otvet += "✏️ Предмет: " + data[d]["les_" + i] + f"\n"
+                otvet += "👨‍🏫 Преподаватель: " + data[d]["prep_" + i] + f"\n"
+                try:
+                    otvet += "Проходит в " + data[d]["aud_" + i] + f"\n"
+                except:
+                    pass
+                try:
+                    link = data[d]["lin_" + i]
+                    sn = data[d]["les_sm_" + i]
+                    links = [[sn, link]]
+                except:
+                    pass
+                return [otvet, links]
 
-    otvet = "Сейчас нет пар"
-    return [otvet, link]
+    otvet = "Сейчас нет пар!"
+    return [otvet, links]
+
+def add_special(id, mess):
+    group, rass = get_log(id)
+    with open(f'./rasp_json/rasp_for_{group}.json', 'r', encoding='utf-8') as file:
+        data = json.load(file)
     
+    if ":" in mess:
+        text = mess[mess.find(":")+1:].strip()
+        mode = mess[:mess.find(":")].split("/")
+    else:
+        mode = mess.split("/")
+    if mode[0] == "записать":
+        data[mode[1].capitalize()].update({ "special": text})
+        otvet = 'Запись сохранена!'
+    elif mode[0] == "добавить":
+        if "special" in data[mode[1].capitalize()]:
+            data[mode[1].capitalize()].update({ "special": data[mode[1].capitalize()]["special"] + f'\n' + text})
+        else:
+            data[mode[1].capitalize()].update({ "special": text})
+        otvet = 'Запись добавлена!'
+    elif mode[0] == "удалить":
+        if "special" in data[mode[1].capitalize()]:
+            data[mode[1].capitalize()].pop("special")
+        otvet = 'Дополнительная запись удалена!'
+    
+    data_d = json.dumps(data, indent=2, ensure_ascii=False)
+    
+    with open(f'./rasp_json/rasp_for_{group}.json', "w", encoding="utf8") as file:
+        file.write(data_d)
+    
+    return otvet
+
 def update(id):
     group, rass = get_log(id)
-    update_rasp(group)
+
+    fn_html = f"./rasp_html/rasp_for_{group}.txt"
+    fn_json = f"./rasp_json/rasp_for_{group}.json"
+    if os.path.isfile(fn_html): 
+        os.remove(fn_html) 
+        print("html removed") 
+    else: 
+        print("HTML file doesn't exists!")
+    
+    if os.path.isfile(fn_json): 
+        special = []
+        with open(f'./rasp_json/rasp_for_{group}.json', 'r', encoding='utf-8') as file:
+            data = json.load(file)
+        for day in weekdays:
+            if "special" in data[day[1:].capitalize()]:
+                special.append([day[1:].capitalize(), data[day[1:].capitalize()]["special"]])
+        os.remove(fn_json) 
+        print("json removed") 
+    else: 
+        print("Json file doesn't exists!")
+    
+    get_all_rasp(group)
+    
+    if special:
+        with open(f'./rasp_json/rasp_for_{group}.json', 'r', encoding='utf-8') as file:
+            data = json.load(file)
+        for day, text in special:
+            data[day]["special"] = text
+        data_d = json.dumps(data, indent=2, ensure_ascii=False)
+        with open(f'./rasp_json/rasp_for_{group}.json', "w", encoding="utf8") as file:
+            file.write(data_d)
 
 def test(id):
     try:

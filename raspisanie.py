@@ -2,7 +2,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup as bs
-from variables import months
+from variables import months, weekdays
 import time
 import datetime
 import json
@@ -63,6 +63,7 @@ def get_all_rasp(group):
                 lessons = pai.find("div", class_="lessons")
                 lesson = lessons.find_all("div", class_="schedule-lesson")
                 tim = pai.find("div", class_="time").text.strip()
+                if len(tim)<11: tim = "0" + tim
 
                 for lesso in lesson:
                     lesson_cl = lesso.get_attribute_list("class")
@@ -75,12 +76,12 @@ def get_all_rasp(group):
                         prep = lesso.find("div", class_="teacher").text.strip()
                         date = lesso.find("div", class_="schedule-dates").text.strip()
                         date_fp = date.split(" ")
-                        min_date = datetime.date(2023, months[date_fp[1]], int(date_fp[0]))
-                        max_date = datetime.date(2023, months[date_fp[4]], int(date_fp[3]))
                         today_date = datetime.date.today()
+                        min_date = datetime.date(today_date.year, months[date_fp[1]], int(date_fp[0]))
+                        max_date = datetime.date(today_date.year, months[date_fp[4]], int(date_fp[3]))
                         print(day_title, ":", min_date, "|", max_date, "|", today_date)
                         
-                        if (today_date >= min_date) and (today_date <= max_date):
+                        if min_date <= today_date <= max_date:
                             k = k + 1
                             if len(les_sm)>39:
                                 les_sm = les_sm[:les.find("(")].strip()
@@ -112,29 +113,10 @@ def get_all_rasp(group):
 
         with open(fn_json, "w", encoding="utf8") as file:
             file.write(data)
-            file.close()
         print(f"Create {fn_json}")
         return fn_json
     else:
         find_group(group)
         get_all_rasp(group)
 
-def add_special(group):
-    pass
-
-def update_rasp(group):
-    fn_html = f"./rasp_html/rasp_for_{group}.txt"
-    fn_json = f"./rasp_json/rasp_for_{group}.json"
-    if os.path.isfile(fn_html): 
-        os.remove(fn_html) 
-        print("html removed") 
-    else: 
-        print("HTML file doesn't exists!")
     
-    if os.path.isfile(fn_json): 
-        os.remove(fn_json) 
-        print("json removed") 
-    else: 
-        print("Json file doesn't exists!")
-    
-    get_all_rasp(group)

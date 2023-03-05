@@ -1,22 +1,13 @@
-import funcs
+import datetime
+from funcs import get_now_rasp
+from botVK import sender, send_now
 import os
-import botVK
-import funcs
-import asyncio
 
-def main():
-    files = os.listdir(path="./log_user/")
-    print(files)
-    for file in files:
-        with open("./log_user/" + file, encoding="utf8") as read:
-            r = read.read()
-            id = int(file[file.find("_")+1:file.find(".")])
-            print("id =", id)
-            group, autsend = funcs.get_log(id)
-            if id == 2:
-                botVK.sender(id, "Привет, твоя группа: " + group)
+def send_rasp(mode="soon"):
+    id = 2
+    otvet, keyboard = send_now(id, mode)
+    sender(id, otvet, keyboard=keyboard)
 
-async def test():
-    print("привет")
-
-asyncio.run(test())
+if __name__ == "__main__":
+    send_rasp("next")
+    

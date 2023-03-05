@@ -19,6 +19,19 @@ def sender(id, text, bot = bot, keyboard=None):
         post['keyboard']=keyboard.get_keyboard()
     bot.method('messages.send', post)
 
+def send_now(id, mode="now"):
+    otvet, keyb = funcs.get_now_rasp(id, mode)
+    keyboard = None
+    if keyb:
+        keyboard = VkKeyboard(inline=True)
+        k = len(keyb)
+        keyb_e = True
+        for sn, l in keyb:
+            k = k - 1
+            keyboard.add_openlink_button(f'{sn}',f'{l}')
+            if k: keyboard.add_line()
+    return [otvet, keyboard]
+
 def start_bot(bot = bot):
     # nonlocal bot, longpoll, weekdays
     for event in longpoll.listen():
@@ -32,7 +45,7 @@ def start_bot(bot = bot):
                     otvet = ""
                     keyb_e = False
                     ########################################
-                    if text == "начать" or text == "привет":
+                    if text == "начать, бот" or text == "привет, бот":
                         keyb_e = True
                         keyboard = VkKeyboard()
                         keyboard.add_button('/Понедельник', VkKeyboardColor.PRIMARY)
@@ -46,11 +59,24 @@ def start_bot(bot = bot):
                         keyboard.add_line()
                         keyboard.add_button('/Цитата_волка', VkKeyboardColor.NEGATIVE)
                         keyboard.add_button('/Сейчас', VkKeyboardColor.POSITIVE)
-                        keyboard.add_line()
-                        keyboard.add_button('/Обновить_расписание', VkKeyboardColor.PRIMARY)
+                        # keyboard.add_line()
+                        # keyboard.add_button('/Обновить_расписание', VkKeyboardColor.PRIMARY)
                         otvet = f"""
-                                Приветствую! \nНапиши мне номер своей группы и я буду показывать вам расписание для нее! \n\nТакже дайте разрешение на автоматическую рассылку, что бы автоматически получать сообщения о начале пары.(в разработке)\n\nОбразец сообщения: Группа: xxx-xxx Авторассылка: да/нет\n\nМожно присылать по отдельности, однако прошу писать сообщение строго по образцу!\n\nОсновные функции: \nПросмотр расписания на определенный день недели\nПросмотр предмета, который идет сейчас\nВывод цитаты волка(АУФ)
+                                Приветствую! \nНапиши мне номер своей группы и я буду показывать вам расписание для нее! \n\nТакже дайте разрешение на автоматическую рассылку, что бы автоматически получать сообщения о начале пары.(в разработке)\n\nОбразец сообщения: Группа: xxx-xxx Авторассылка: да/нет\n\nМожно присылать по отдельности, однако прошу писать сообщение строго по образцу!\n\nОсновные функции: \n• Просмотр расписания на определенный день недели\n• Просмотр предмета, который идет сейчас\n• Добавить определенному дню недели дополнительную запись\nㅤПример: Записать/Понедельник: Текст\nㅤЕсть 3 режима: Записать, Добавить или Удалить. В первом случае предыдущие записи стираются, во втором - дописывается в конец, в третьем - запись удаляется\n• Вывод цитаты волка(АУФ)
                                 """
+                    ################################################
+                    if "группа:" in text or "авторассылка:" in text:
+                        try:
+                            otvet = funcs.make_log(text, id)
+                        except Exception as ex:
+                            otvet = f"Возникла ошибка: " + str(ex)
+                    ####################################################################
+                    if "записать/" in text or "добавить/" in text or "удалить/" in text:
+                        try:
+                            otvet = funcs.add_special(id, text)
+                            sender(id, otvet)
+                        except Exception as ex:
+                            otvet = f"Возникла ошибка: " + str(ex)
                     ####################
                     for day in weekdays:
                         if day in text:
@@ -78,22 +104,7 @@ def start_bot(bot = bot):
                     #####################
                     if "/сейчас" in text:
                         try:
-                            otvet, keyb = funcs.get_now_rasp(id)
-                            if keyb:
-                                keyboard = VkKeyboard(inline=True)
-                                k = len(keyb)
-                                keyb_e = True
-                                for sn, l in keyb:
-                                    k = k - 1
-                                    keyboard.add_openlink_button(f'{sn}',f'{l}')
-                                    if k: keyboard.add_line()
-                                    print(sn)
-                        except Exception as ex:
-                            otvet = f"Возникла ошибка: " + str(ex)
-                    ################################################
-                    if "группа:" in text or "авторассылка:" in text:
-                        try:
-                            otvet = funcs.make_log(text, id)
+                            otvet, keyboard = send_now(id)
                         except Exception as ex:
                             otvet = f"Возникла ошибка: " + str(ex)
                     ##################################

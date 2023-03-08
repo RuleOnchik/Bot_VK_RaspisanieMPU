@@ -3,14 +3,17 @@ from vk_api.longpoll import VkLongPoll, VkEventType
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 from vk_api import VkUpload
 import time
-import subprocess
 import datetime
 import funcs
-from variables import token, id_name, weekdays
+from variables import token, id_name, weekdays, lesson_time
 import random
+from threading import Thread
+import os
 
 bot = vk_api.VkApi(token = token)
 longpoll = VkLongPoll(bot)
+time_delta_5 = datetime.timedelta(minutes=5)
+time_delta_1 = datetime.timedelta(minutes=1)
 
 def sender(id, text, bot = bot, keyboard=None):
     # nonlocal bot, id_name
@@ -19,8 +22,40 @@ def sender(id, text, bot = bot, keyboard=None):
         post['keyboard']=keyboard.get_keyboard()
     bot.method('messages.send', post)
 
-def send_now(id, mode="now"):
-    otvet, keyb = funcs.get_now_rasp(id, mode)
+def group_autosend():
+    def send(id):
+        date_today = datetime.date.today()
+        time_now = datetime.datetime.today()
+        print("Now:", time_now.time())
+        for tim in lesson_time:
+            sleep_time = 120
+            start_time = datetime.datetime.combine(date_today, datetime.time.fromisoformat(tim[:tim.find("-")]))
+            final_time = datetime.datetime.combine(date_today, datetime.time.fromisoformat(tim[tim.find("-")+1:]))
+            print('Time:', (start_time-time_delta_5).time(), "-", final_time.time())
+            if start_time-time_delta_5 <= time_now <= start_time:
+                send_now(id, "soon")
+                print("Complete - soon", time_now)
+                sleep_time = 5400
+                return sleep_time
+            elif final_time-time_delta_1 <= time_now <= final_time+time_delta_1:
+                send_now(id, "next")
+                print("Complete - next", time_now)
+                return sleep_time
+        print("Not that time")
+        return sleep_time
+    
+    while True:
+        dir = os.listdir('./log_user')
+        for ld in dir:
+            id = int(ld[4:ld.find('.')])
+            print("Autosend id =",id)
+            group, rass = funcs.get_log(id)
+            if rass == "да":
+                sleep_time = send(id)
+        time.sleep(sleep_time)    
+
+def send_now(id, mode="now", time_mode=None):
+    otvet, keyb = funcs.get_now_rasp(id, mode, time_mode)
     keyboard = None
     if keyb:
         keyboard = VkKeyboard(inline=True)
@@ -30,7 +65,8 @@ def send_now(id, mode="now"):
             k = k - 1
             keyboard.add_openlink_button(f'{sn}',f'{l}')
             if k: keyboard.add_line()
-    return [otvet, keyboard]
+    if otvet:
+        sender(id, otvet, keyboard=keyboard)
 
 def start_bot(bot = bot):
     # nonlocal bot, longpoll, weekdays
@@ -61,6 +97,7 @@ def start_bot(bot = bot):
                         keyboard.add_button('/Сейчас', VkKeyboardColor.POSITIVE)
                         # keyboard.add_line()
                         # keyboard.add_button('/Обновить_расписание', VkKeyboardColor.PRIMARY)
+                        # keyboard.add_button('/stop', VkKeyboardColor.NEGATIVE)
                         otvet = f"""
                                 Приветствую! \nНапиши мне номер своей группы и я буду показывать вам расписание для нее! \n\nТакже дайте разрешение на автоматическую рассылку, что бы автоматически получать сообщения о начале пары.(в разработке)\n\nОбразец сообщения: Группа: xxx-xxx Авторассылка: да/нет\n\nМожно присылать по отдельности, однако прошу писать сообщение строго по образцу!\n\nОсновные функции: \n• Просмотр расписания на определенный день недели\n• Просмотр предмета, который идет сейчас\n• Добавить определенному дню недели дополнительную запись\nㅤПример: Записать/Понедельник: Текст\nㅤЕсть 3 режима: Записать, Добавить или Удалить. В первом случае предыдущие записи стираются, во втором - дописывается в конец, в третьем - запись удаляется\n• Вывод цитаты волка(АУФ)
                                 """
@@ -104,7 +141,7 @@ def start_bot(bot = bot):
                     #####################
                     if "/сейчас" in text:
                         try:
-                            otvet, keyboard = send_now(id)
+                            send_now(id)
                         except Exception as ex:
                             otvet = f"Возникла ошибка: " + str(ex)
                     ##################################
@@ -125,7 +162,8 @@ def start_bot(bot = bot):
 
 def main():
     print('Star main')
-    
+    thread_autosend = Thread(target=group_autosend, daemon=True)
+    thread_autosend.start()
     start_bot()
 
 if __name__ == "__main__":

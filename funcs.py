@@ -74,119 +74,95 @@ def get_log(id):
 
 def rasp(id, day):
     group, rass = get_log(id)
-
     data = get_json_d(group)
     now = datetime.now()
-    name_r = day.title()
-    r = data[name_r]
-    otvet = name_r
-    tim = None
-    les = None
-    les_sm = None
-    aud = None
-    lin = None
-    prep = None
-    les_date = None
-    i = [1, 2, 3, 4, 5, 6, 7]
+    r = data[day.title()]
+    otvet = day.title() + f"\n"
     links = []
-    if r["les_have"]:
-        for i in i:
-            aud = None
-            lin = None
+    if r["les_have"] == 0:
+        otvet = otvet + f'\nВ этот день пар нет\n'
+        return [otvet, links]
+    for i in range(r["les_have"]):
+        lin = None
+        les_sm = None
+        i = str(i+1)
+        if r["les_" + i] != None:
+            otvet += f"\n⏰ {r['tim_' + i]}\n✏️ {r['les_' + i]}\n👨‍🏫 {r['prep_' + i]}\n"
             try:
-                i = str(i)
-                if r["les_" + i] != None:
-                    tim = "⏰" + r["tim_" + i]
-                    les = "✏️" + r["les_" + i]
-                    les_sm = r["les_sm_" + i]
-                    les_date = "📅" + r["date_" + i]
-                    try:
-                        aud = r["aud_" + i]
-                    except:
-                        pass
-                    try:
-                        lin = r["lin_" + i]
-                    except:
-                        pass
-                    prep = "👨‍🏫" + r["prep_" + i]
-                    otvet = otvet + f'\n\n{tim}'
-                    otvet = otvet + f'\n{les}'
-                    otvet = otvet + f'\n{prep}'
-                    if aud != None:
-                        otvet = otvet + f'\nПроходит в {aud}'
-                    if lin != None:
-                        links += [[les_sm, lin]]
-                    otvet = otvet + f'\n{les_date}'
+                otvet += f"Проходит в {r['aud_' + i]}\n"
             except:
                 pass
-    elif r["les_have"] == 0:
-        otvet = otvet + f'\n\nВ этот день пар нет\n'
+            otvet += f"📅 {r['date_' + i]}\n"
+            try:
+                les_sm = r['les_sm_' + i]
+                lin = r['lin_' + i]
+                links += [[les_sm, lin]]
+            except:
+                pass
+    
     if "special" in r:
-        otvet = otvet + f'\n\nДополнение: {r["special"]}\n'
-    keyboard = links
-    otvet = otvet + f'\n{now.strftime("%A, %d. %B %Y %I:%M%p")}'
-    return [otvet, keyboard]
+        otvet += f'\n\nДополнение: {r["special"]}\n'
+    otvet += f'\n{now.strftime("%A, %d. %B %Y %I:%M%p")}'
+    return [otvet, links]
 
 def get_now_rasp(id, mode="now", time_mode=None):
     group, rass = get_log(id)
     data = get_json_d(group)
-    wek = datetime.today().weekday()
-    time_n = datetime.today()
-    time_now = datetime.fromisoformat("1991-01-01T"+f"{time_n.hour if len(str(time_n.hour))==2 else '0'+str(time_n.hour)}")
-    if mode == "now":
-        otvet = f"Сейчас идет:\n"
-    elif mode == "soon":
-        otvet = f"Скоро начнется:\n"
-    elif mode == "next":
-        otvet = f"Следущий занятие:\n"
-    time_delta = timedelta(minutes=5)
-    
-    # wek = 1
-    # time_n = "12:18"
-    # time_now = datetime.fromisoformat("1991-01-01T"+time_n)
-    
-    link = ""
+    otvet = ""
     links = []
-    d = weekday_d[wek]
-    print(d)
+    wek = datetime.today().weekday()
+    day = weekday_d[wek]
+    date_today = date.today()
+    time_delta = timedelta(minutes=5)
+    time_delta_1 = timedelta(minutes=1)
+    
+    if time_mode:
+        datetime_now = datetime.combine(date_today, time_mode)
+    else:
+        datetime_now = datetime.today()
+    
+    print(datetime_now)
+    
     if wek == 6:
         otvet = "Сегодня нет пар!"
-        return [otvet, link]
-    if data[d]["les_have"]:
-        for i in range(data[d]["les_have"]):
-            i = str(i+1)
-            tim = data[d]["tim_" + i]
-            print("Время: ",tim)
-            min_time = datetime.fromisoformat("1991-01-01T"+tim[:tim.find("-")])
-            max_time = datetime.fromisoformat("1991-01-01T"+tim[tim.find("-")+1:])
-            if min_time-time_delta <= time_now <= max_time:
-                if (int(i)+1 != data[d]["les_have"]):
-                    if mode == "next":
-                        i = str(int(i)+1)
-                        tim = data[d]["tim_" + i]
-                elif min_time-time_delta >= time_now:
-                    otvet = ""
-                    return [otvet, links]
-                elif time_now >= max_time:
-                    otvet = "На сегодня пары закончились"
-                    return [otvet, links]
-                if mode == "soon" or mode == "next":
-                    otvet += "⏰ Начало в " + tim + f"\n" 
-                otvet += "✏️ Предмет: " + data[d]["les_" + i] + f"\n"
-                otvet += "👨‍🏫 Преподаватель: " + data[d]["prep_" + i] + f"\n"
-                try:
-                    otvet += "Проходит в " + data[d]["aud_" + i] + f"\n"
-                except:
-                    pass
-                try:
-                    link = data[d]["lin_" + i]
-                    sn = data[d]["les_sm_" + i]
-                    links = [[sn, link]]
-                except:
-                    pass
-                return [otvet, links]
+        return [otvet, links]
 
-    otvet = "Сейчас нет пар!"
+    for ir in range(data[day]["les_have"]):
+        i = str(ir+1)
+        tim = data[day]["tim_" + i]
+        min_time = datetime.combine(date_today, time.fromisoformat(tim[:tim.find("-")]))
+        max_time = datetime.combine(date_today, time.fromisoformat(tim[tim.find("-")+1:]))
+        if min_time-time_delta <= datetime_now <= max_time+time_delta_1:
+            if mode == "now":
+                otvet = f"Сейчас идет:\n\n"
+            elif mode == "soon":
+                otvet = f"Скоро начнется:\n\n"
+            elif mode == "next":
+                otvet = f"Следущий занятие:\n\n"
+            if mode == "next":
+                if ir+1 < data[day]["les_have"]:
+                    i = str(ir+2)
+                else:
+                    otvet = "На сегодня пары закончились!"
+                    return [otvet, links]
+            tim = data[day]["tim_" + i]
+            
+            otvet += f"✏️ Предмет: {data[day]['les_' + i]}\n"
+            if mode == "soon" or mode == "next":
+                otvet += f"⏰ Начало в {tim}\n"
+            otvet += f"👨‍🏫 Преподаватель: {data[day]['prep_' + i]}\n"
+            try:
+                otvet += "Проходит в " + data[day]["aud_" + i] + f"\n"
+            except:
+                pass
+            try:
+                links = [[data[day]["les_sm_" + i], data[day]["lin_" + i]]]
+            except:
+                pass
+            return [otvet, links]
+    
+    if mode == "now":
+        otvet = f"Сейчас нет пар!"
     return [otvet, links]
 
 def add_special(id, mess):

@@ -1,5 +1,38 @@
 import json
-import datetime
+from datetime import time, datetime, timedelta
+import os
+
+print(os.listdir('./log_user/'))
+ld = os.listdir('./log_user/')
+print(ld[0][4:ld[0].find('.')])
+
+a = time(9,58,32)
+b = time(16,58,33)
+s = "09:24-12:45"
+st = datetime.now().time()
+print(int("03"))
+print(st)
+print(a)
+print(b)
+time_delta = timedelta(minutes=5)
+if a > st+time_delta:
+    print("a > s")
+else:
+    print("b > s")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # s = "01 Сен - 20 Фев"
 # date = s.split(" ")
